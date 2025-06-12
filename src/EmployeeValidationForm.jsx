@@ -1,129 +1,166 @@
 import React, { useState, useEffect } from "react";
 
-const initialState = {
+const initialInputState = {
   name: "",
   email: "",
   employeeId: "",
   joiningDate: "",
 };
 
-const initialErrors = {
-  name: "Name must be at least 4 characters long and only contain letters and spaces.",
-  email: "Email must be a valid email address.",
-  employeeId: "Employee ID must be exactly 6 digits.",
-  joiningDate: "Joining Date cannot be in the future.",
+const initialErrorState = {
+  name: true,
+  email: true,
+  employeeId: true,
+  joiningDate: true,
 };
 
-const EmployeeValidationForm = () => {
-  const [formData, setFormData] = useState(initialState);
-  const [errors, setErrors] = useState(initialErrors);
-  const [isFormValid, setIsFormValid] = useState(false);
+function EmployeeValidationForm() {
+  const [inputs, setInputs] = useState(initialInputState);
+  const [errors, setError] = useState(initialErrorState);
 
-  useEffect(() => {
-    const noErrors = Object.values(errors).every((e) => e === "");
-    const allFieldsFilled = Object.values(formData).every((val) => val !== "");
-    setIsFormValid(noErrors && allFieldsFilled);
-  }, [errors, formData]);
+  const isNameValid = (name) => {
+    const isValid = name.length >= 4 && name.match(/^[A-Za-z ]+$/).length;
+    setError((currentErrors) => ({
+      ...currentErrors,
+      name: !isValid,
+    }));
+  };
 
-  const validate = (name, value) => {
-    switch (name) {
-      case "name":
-        return /^[A-Za-z\s]{4,}$/.test(value) ? "" : initialErrors.name;
-      case "email":
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-          ? ""
-          : initialErrors.email;
-      case "employeeId":
-        return /^\d{6}$/.test(value) ? "" : initialErrors.employeeId;
-      case "joiningDate":
-        return new Date(value) <= new Date() ? "" : initialErrors.joiningDate;
-      default:
-        return "";
-    }
+  const isEmailValid = (email) => {
+    const isValid = email.includes("@") && email.endsWith(".com");
+    setError((currentErrors) => ({
+      ...currentErrors,
+      email: !isValid,
+    }));
+  };
+
+  const isEmployeeIdVaild = (employeeId) => {
+    const isValid = employeeId.length === 6 && Number.isInteger(+employeeId);
+    setError((currentErrors) => ({
+      ...currentErrors,
+      employeeId: !isValid,
+    }));
+  };
+
+  const isDateValid = (date) => {
+    const today = new Date("2025-04-11");
+    const isValid = new Date(date) <= today;
+    setError((currentErrors) => ({
+      ...currentErrors,
+      joiningDate: !isValid,
+    }));
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
+    setInputs((currentInputs) => ({
+      ...currentInputs,
+      [e.target.name]: e.target.value,
     }));
 
-    const errorMsg = validate(name, value);
-    setErrors((prev) => ({
-      ...prev,
-      [name]: errorMsg,
-    }));
+    switch (e.target.name) {
+      case "name":
+        isNameValid(e.target.value);
+        break;
+      case "email":
+        isEmailValid(e.target.value);
+        break;
+      case "employeeId":
+        isEmployeeIdVaild(e.target.value);
+        break;
+      case "joiningDate":
+        isDateValid(e.target.value);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isFormValid) {
-      alert("Form submitted successfully!");
-      setFormData(initialState);
-      setErrors(initialErrors);
-    }
+    setInputs(initialInputState);
+    setError(initialErrorState);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label>Name:</label>
-        <br />
+    <div className="layout-column align-items-center mt-20 ">
+      <div
+        className="layout-column align-items-start mb-10 w-50"
+        data-testid="input-name"
+      >
         <input
+          className="w-100"
           type="text"
           name="name"
-          value={formData.name}
+          value={inputs.name}
+          placeholder="Name"
+          data-testid="input-name-test"
           onChange={handleChange}
         />
-        {errors.name && <p style={{ color: "red" }}>{errors.name}</p>}
-      </div>
-
-      <div>
-        <label>Email:</label>
-        <br />
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-        />
-        {errors.email && <p style={{ color: "red" }}>{errors.email}</p>}
-      </div>
-
-      <div>
-        <label>Employee ID:</label>
-        <br />
-        <input
-          type="text"
-          name="employeeId"
-          value={formData.employeeId}
-          onChange={handleChange}
-        />
-        {errors.employeeId && (
-          <p style={{ color: "red" }}>{errors.employeeId}</p>
+        {errors.name && (
+          <p className="error mt-2">
+            Name must be at least 4 characters long and only contain letters and
+            spaces
+          </p>
         )}
       </div>
-
-      <div>
-        <label>Joining Date:</label>
-        <br />
+      <div
+        className="layout-column align-items-start mb-10 w-50"
+        data-testid="input-email"
+      >
         <input
+          className="w-100"
+          type="email"
+          name="email"
+          value={inputs.email}
+          placeholder="Email"
+          onChange={handleChange}
+        />
+        {errors.email && (
+          <p className="error mt-2">Email must be a valid email address</p>
+        )}
+      </div>
+      <div
+        className="layout-column align-items-start mb-10 w-50"
+        data-testid="input-employee-id"
+      >
+        <input
+          className="w-100"
+          type="text"
+          name="employeeId"
+          value={inputs.employeeId}
+          placeholder="Employee ID"
+          onChange={handleChange}
+          minLength={6}
+          maxLength={6}
+        />
+        {errors.employeeId && (
+          <p className="error mt-2">Employee ID must be exactly 6 digits</p>
+        )}
+      </div>
+      <div
+        className="layout-column align-items-start mb-10 w-50"
+        data-testid="input-joining-date"
+      >
+        <input
+          className="w-100"
           type="date"
           name="joiningDate"
-          value={formData.joiningDate}
+          value={inputs.joiningDate}
+          placeholder="Joining Date"
           onChange={handleChange}
         />
         {errors.joiningDate && (
-          <p style={{ color: "red" }}>{errors.joiningDate}</p>
+          <p className="error mt-2">Joining Date cannot be in the future</p>
         )}
       </div>
-
-      <button type="submit" disabled={!isFormValid}>
+      <button
+        data-testid="submit-btn"
+        type="submit"
+        onClick={handleSubmit}
+        disabled={
+          errors.name && errors.email && errors.employeeId && errors.joiningDate
+        }
+      >
         Submit
       </button>
-    </form>
+    </div>
   );
-};
-
+}
 export default EmployeeValidationForm;
